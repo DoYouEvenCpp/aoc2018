@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include <string>
 #include <algorithm>
 #include <iostream>
@@ -25,11 +26,7 @@ enum class tile
 	left_right		/* '-' */,
 	curve_left		/* '\' */,
 	curve_right		/* '/' */,
-	intersection	/* '+' */,
-	cart_up			/* '^' */,
-	cart_down		/* 'v' */,
-	cart_left		/* '<' */,
-	cart_right		/* '>' */,
+	intersection	/* '+' */
 };
 
 enum class direction
@@ -40,20 +37,20 @@ enum class direction
 	right
 };
 
-struct position
-{
-	int x;
-	int y;
-};
-
 struct cart
 {
-	int x;
-	int y;
+	std::size_t x;
+	std::size_t y;
+	direction current_move;
 	direction last_move;
 };
 
-std::array<std::array<tile, 150>, 150> map;
+constexpr auto size = 13;
+using map_type = std::array<std::array<tile, size>, size>;
+using cart_type = std::array<std::array<cart, size>, size>;
+
+map_type map;
+cart_type positions;
 
 const auto readFile = []
 {
@@ -70,10 +67,27 @@ const auto readFile = []
 			else if (ch == '\\') map[line_counter][row_counter] = tile::curve_left;
 			else if (ch == '/') map[line_counter][row_counter] = tile::curve_right;
 			else if (ch == '+') map[line_counter][row_counter] = tile::intersection;
-			else if (ch == '>') map[line_counter][row_counter] = tile::cart_right;
-			else if (ch == '<') map[line_counter][row_counter] = tile::cart_left;
-			else if (ch == '^') map[line_counter][row_counter] = tile::cart_up;
-			else if (ch == 'v') map[line_counter][row_counter] = tile::cart_down;
+
+			else if (ch == '>')
+			{
+				positions[line_counter][row_counter] = { line_counter, row_counter, direction::right};
+				map[line_counter][row_counter] = tile::left_right;
+			}
+			else if (ch == '<')
+			{
+				positions[line_counter][row_counter] = { line_counter, row_counter, direction::left };
+				map[line_counter][row_counter] = tile::left_right;
+			}
+			else if (ch == '^')
+			{
+				positions[line_counter][row_counter] = { line_counter, row_counter, direction::up };
+				map[line_counter][row_counter] = tile::up_down;
+			}
+			else if (ch == 'v')
+			{
+				positions[line_counter][row_counter] = { line_counter, row_counter, direction::down };
+				map[line_counter][row_counter] = tile::up_down;
+			}
 			else map[line_counter][row_counter] = tile::empty;
 			++row_counter;
 		}
@@ -82,9 +96,8 @@ const auto readFile = []
 	input.close();
 };
 
-int main()
+const auto print = [](map_type& map)
 {
-	readFile();
 	for (auto& line : map)
 	{
 		for (auto&i : line)
@@ -94,13 +107,26 @@ int main()
 			else if (i == tile::curve_left)		std::cout << '\\';
 			else if (i == tile::curve_right)	std::cout << '/';
 			else if (i == tile::intersection)	std::cout << '+';
-			else if (i == tile::cart_down)		std::cout << 'v';
-			else if (i == tile::cart_up)		std::cout << '^';
-			else if (i == tile::cart_right)		std::cout << '>';
-			else if (i == tile::cart_left)		std::cout << '<';
 			else								std::cout << ' ';
 		}
 		std::cout << std::endl;
+	}
+};
+
+
+auto move_cart = [](cart& c, map_type& map, cart_type& positions)
+{
+	assert(positions[c.x][c.y] == c);
+	return false;
+};
+
+int main()
+{
+	readFile();
+	print(map);
+	bool isColisionDetected = false;
+	while (!isColisionDetected)
+	{
 	}
 	return 0;
 }
