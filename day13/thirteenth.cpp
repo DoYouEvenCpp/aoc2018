@@ -71,7 +71,7 @@ cart_collection positions;
 
 const auto readFile = [](map_type& map)
 {
-	std::fstream input("C:\\Users\\staho\\projects\\dummy\\x64\\Release\\input", std::fstream::in);
+	std::fstream input("C:\\Users\\xxkubias\\Documents\\projects\\dummy\\dummy\\x64\\Release\\input", std::fstream::in);
 	std::string line;
 	std::size_t line_counter = 0;
 	while (std::getline(input, line))
@@ -87,7 +87,7 @@ const auto readFile = [](map_type& map)
 
 			else if (ch == '>')
 			{
-				positions.push_back({ row_counter, line_counter, direction::right, turn_orientation::left});
+				positions.push_back({ row_counter, line_counter, direction::right, turn_orientation::left });
 				map[line_counter][row_counter] = tile::left_right;
 			}
 			else if (ch == '<')
@@ -148,10 +148,10 @@ const auto moveCart = [](cart& c, map_type& map)
 {
 	switch (c.orientation)
 	{
-		case direction::up: c.y -= 1; break;
-		case direction::down: c.y += 1; break;
-		case direction::left: c.x -= 1; break;
-		case direction::right: c.x += 1; break;
+	case direction::up: c.y -= 1; break;
+	case direction::down: c.y += 1; break;
+	case direction::left: c.x -= 1; break;
+	case direction::right: c.x += 1; break;
 	}
 	const auto tile = map[c.y][c.x];
 	if (tile == tile::intersection)
@@ -160,10 +160,10 @@ const auto moveCart = [](cart& c, map_type& map)
 		{
 			switch (c.orientation)
 			{
-				case direction::up: c.orientation = direction::left; break;
-				case direction::down: c.orientation = direction::right; break;
-				case direction::left: c.orientation = direction::down; break;
-				case direction::right: c.orientation = direction::up; break;
+			case direction::up: c.orientation = direction::left; break;
+			case direction::down: c.orientation = direction::right; break;
+			case direction::left: c.orientation = direction::down; break;
+			case direction::right: c.orientation = direction::up; break;
 			}
 			c.last_move = turn_orientation::straight;
 		}
@@ -205,22 +205,15 @@ const auto moveCart = [](cart& c, map_type& map)
 	}
 };
 
-const auto colisionDetector = [](cart_collection& v)
+const auto isColisionoOccurred = [](cart_collection& v)
 {
 	std::set<std::pair<std::size_t, std::size_t>> temp;
-	auto queue = getPriorityQueue(positions);
-	while (!queue.empty())
+	for(auto& c: v)
 	{
-		auto c = queue.top();
-		queue.pop();
-		if (c.x == 41 && c.y == 17)
-		{
-			std::cout << "ZONK";
-		}
 		if (auto[_, isInserted] = temp.insert(std::make_pair(c.x, c.y)); !isInserted)
 		{
 			std::cout << c.x << " - " << c.y << std::endl;
-			print(map);
+			//print(map);
 			return true;
 		}
 	}
@@ -230,24 +223,30 @@ const auto colisionDetector = [](cart_collection& v)
 int main()
 {
 	readFile(map);
-	//print(map);
 	unsigned counter = 1;
-	while (!colisionDetector(positions))
+	bool isColisionDetected = false;
+	while (!isColisionDetected)
 	{
-		//std::cout << counter << std::endl;
 		auto queue = getPriorityQueue(positions);
 		positions.clear();
 		while (!queue.empty())
 		{
-			auto c = queue.top();
-			moveCart(c, map);
-			positions.push_back(c);
+			positions.push_back(queue.top());
 			queue.pop();
+		}
+		for (auto& c : positions)
+		{
+			moveCart(c, map);
+			isColisionDetected = isColisionoOccurred(positions);
+			if (isColisionDetected) break;
 		}
 		++counter;
 	}
 
 	//55,40 - NOK
 	//41,17 -> should be like that!
+
+	//second
+	////23,103 -> NOK
 	return 0;
 }
