@@ -18,6 +18,7 @@
 #include <deque>
 #include <queue>
 
+
 enum class tile
 {
 	empty = 0,
@@ -71,7 +72,7 @@ cart_collection positions;
 
 const auto readFile = [](map_type& map)
 {
-	std::fstream input("C:\\Users\\xxkubias\\Documents\\projects\\dummy\\dummy\\x64\\Release\\input", std::fstream::in);
+	std::fstream input("input", std::fstream::in);
 	std::string line;
 	std::size_t line_counter = 0;
 	while (std::getline(input, line))
@@ -126,7 +127,7 @@ const auto print = [](map_type& map)
 			{
 				std::cout << 'X';
 			}
-			else if (map[i][j] == tile::up_down)				std::cout << '|';
+			else if (map[i][j] == tile::up_down)		std::cout << '|';
 			else if (map[i][j] == tile::left_right)		std::cout << '-';
 			else if (map[i][j] == tile::curve_left)		std::cout << '\\';
 			else if (map[i][j] == tile::curve_right)	std::cout << '/';
@@ -205,14 +206,14 @@ const auto moveCart = [](cart& c, map_type& map)
 	}
 };
 
-const auto isColisionoOccurred = [](cart_collection& v)
+const auto colissionOccurred = [](cart_collection v)
 {
 	std::set<std::pair<std::size_t, std::size_t>> temp;
 	for(auto& c: v)
 	{
 		if (auto[_, isInserted] = temp.insert(std::make_pair(c.x, c.y)); !isInserted)
 		{
-			std::cout << c.x << " - " << c.y << std::endl;
+			std::cout << "first puzzle answer: " << c.x << " - " << c.y << std::endl;
 			//print(map);
 			return true;
 		}
@@ -223,6 +224,8 @@ const auto isColisionoOccurred = [](cart_collection& v)
 int main()
 {
 	readFile(map);
+	auto org_map = map;
+	auto org_pos = positions;
 	unsigned counter = 1;
 	bool isColisionDetected = false;
 	while (!isColisionDetected)
@@ -237,16 +240,53 @@ int main()
 		for (auto& c : positions)
 		{
 			moveCart(c, map);
-			isColisionDetected = isColisionoOccurred(positions);
+			isColisionDetected = colissionOccurred(positions);
 			if (isColisionDetected) break;
 		}
+	}
+	map = org_map;
+	positions = org_pos;
+	while (positions.size() > 1)
+	{
+		auto queue = getPriorityQueue(positions);
+		positions.clear();
+		while (!queue.empty())
+		{
+			positions.push_back(queue.top());
+			queue.pop();
+		}
+
+		std::set<std::pair<std::size_t, std::size_t>> colision_points;
+		for (auto& c: positions)
+		{
+			if (std::none_of(colision_points.begin(), colision_points.end(), [&c](auto& cur){return c.x == cur.first && c.y == cur.second; }))
+			{
+				moveCart(c, map);
+			}
+			std::set<std::pair<std::size_t, std::size_t>> temp;
+			for (auto& e : positions)
+			{
+				if (auto[_, isInserted] = temp.insert(std::make_pair(e.x, e.y)); !isInserted)
+				{
+					colision_points.insert(std::make_pair(e.x, e.y));
+				}
+			}
+		}
+
+		if (colision_points.size() > 0)
+		{
+			auto p = [&colision_points](cart& c)
+			{
+				return std::any_of(colision_points.begin(), colision_points.end(), [&](auto& p) {return c.x == p.first && c.y == p.second; });
+			};
+			positions.erase(std::remove_if(positions.begin(), positions.end(), p), positions.end());
+		}
+		if (positions.size() == 1)
+		{
+			std::cout << "second puzzle answer: " << positions.front().x << " - " << positions.front().y << std::endl;
+		}
+
 		++counter;
 	}
-
-	//55,40 - NOK
-	//41,17 -> should be like that!
-
-	//second
-	////23,103 -> NOK
 	return 0;
 }
